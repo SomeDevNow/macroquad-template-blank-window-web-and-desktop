@@ -15,10 +15,13 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            platform: windows
             artifact: desktop-windows
           - os: macos-latest
+            platform: mac
             artifact: desktop-macos
           - os: ubuntu-latest
+            platform: linux
             artifact: desktop-linux
 
     runs-on: ${{ matrix.os }}
@@ -35,13 +38,23 @@ jobs:
       - name: Build desktop release
         run: cargo build --release
 
-      - name: Upload executable
+      - name: Export desktop build
+        shell: bash
+        run: |
+          mkdir -p "dist/${{ matrix.platform }}"
+
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp target/release/doodle-jump.exe "dist/${{ matrix.platform }}/"
+          else
+            cp target/release/doodle-jump "dist/${{ matrix.platform }}/"
+          fi
+
+      - name: Upload desktop build
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            target/release/blank_2d_template
-            target/release/blank_2d_template.exe
+          path: dist/${{ matrix.platform }}/
+          if-no-files-found: error
 
   web:
     runs-on: ubuntu-latest
@@ -58,10 +71,12 @@ jobs:
       - name: Package web build
         run: |
           mkdir -p dist/web
-          cp web/index.html dist/web/
-          cp target/wasm32-unknown-unknown/release/blank_2d_template.wasm dist/web/
+          cp target/wasm32-unknown-unknown/release/doodle-jump.wasm dist/web/
+          test -f dist/web/index.html
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: dist/web/
+          if-no-files-found: error
