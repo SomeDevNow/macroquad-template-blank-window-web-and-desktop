@@ -1,0 +1,67 @@
+name: Build desktop and web
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: desktop-windows
+          - os: macos-latest
+            artifact: desktop-macos
+          - os: ubuntu-latest
+            artifact: desktop-linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libx11-dev libxi-dev libgl1-mesa-dev libasound2-dev
+
+      - name: Build desktop release
+        run: cargo build --release
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            target/release/blank_2d_template
+            target/release/blank_2d_template.exe
+
+  web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install WebAssembly target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build web release
+        run: cargo build --release --target wasm32-unknown-unknown
+
+      - name: Package web build
+        run: |
+          mkdir -p dist/web
+          cp web/index.html dist/web/
+          cp target/wasm32-unknown-unknown/release/blank_2d_template.wasm dist/web/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: dist/web/
