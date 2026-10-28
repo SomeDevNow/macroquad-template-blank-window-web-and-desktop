@@ -1,4 +1,4 @@
-name: Build desktop and web
+name: Build desktop
 
 on:
   push:
@@ -54,30 +54,4 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: dist/${{ matrix.platform }}/
-          if-no-files-found: error
-
-  web:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install WebAssembly target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Build web release
-        run: cargo build --release --target wasm32-unknown-unknown
-
-      - name: Package web build
-        run: |
-          mkdir -p dist/web
-          cp target/wasm32-unknown-unknown/release/doodle-jump.wasm dist/web/
-          test -f dist/web/index.html
-
-
-      - name: Upload web build
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: dist/web/
           if-no-files-found: error
