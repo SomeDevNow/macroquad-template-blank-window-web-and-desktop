@@ -71,8 +71,8 @@ jobs:
       - name: Package web build
         run: |
           mkdir -p dist/web
+          cp web/index.html dist/web/
           cp target/wasm32-unknown-unknown/release/doodle-jump.wasm dist/web/
-          test -f dist/web/index.html
 
       - name: Upload web build
         uses: actions/upload-artifact@v4
